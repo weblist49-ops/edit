@@ -17,7 +17,7 @@ const EditorContent: React.FC = () => {
   };
 
   return (
-    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900">
+    <div className="h-screen flex flex-col bg-gradient-to-br from-gray-50 via-indigo-50/30 to-purple-50/30 dark:from-gray-950 dark:via-indigo-950/30 dark:to-purple-950/30">
       <Toolbar />
       <div className="flex-1 flex overflow-hidden">
         <ComponentLibrary onDragStart={handleDragStart} />
@@ -31,6 +31,7 @@ const EditorContent: React.FC = () => {
 };
 
 export const Editor: React.FC = () => {
+  console.log('Editor page loaded');
   return (
     <EditorProvider>
       <EditorContent />

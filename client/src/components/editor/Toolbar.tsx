@@ -1,5 +1,5 @@
 import React from 'react';
-import { Monitor, Tablet, Smartphone, Grid3x3, Undo2, Redo2, Download } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Grid3x3, Undo2, Redo2, Download, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEditor } from '@/contexts/EditorContext';
 import { DeviceMode } from '@/types/editor';
@@ -15,31 +15,45 @@ export const Toolbar: React.FC = () => {
 
   const handleExport = () => {
     console.log('Export functionality triggered');
-    // Mock export - in real implementation would generate files
   };
 
   return (
-    <div className="h-16 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6">
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-1 bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+    <div className="h-16 glass-effect border-b border-gray-200/50 dark:border-gray-700/50 flex items-center justify-between px-6 backdrop-blur-xl">
+      <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-xl p-1 backdrop-blur-sm">
           {deviceModes.map(({ mode, icon, label }) => (
             <Button
               key={mode}
               variant={deviceMode === mode ? 'default' : 'ghost'}
               size="sm"
-              onClick={() => setDeviceMode(mode)}
-              className={deviceMode === mode ? 'bg-indigo-600 hover:bg-indigo-700' : ''}
+              onClick={() => {
+                setDeviceMode(mode);
+                console.log(`Device mode changed to: ${mode}`);
+              }}
+              className={`transition-smooth ${
+                deviceMode === mode 
+                  ? 'btn-brand shadow-lg' 
+                  : 'hover:bg-white/50 dark:hover:bg-gray-700/50'
+              }`}
               title={label}
             >
               {icon}
             </Button>
           ))}
         </div>
+        
         <Button
           variant={showGrid ? 'default' : 'ghost'}
           size="sm"
-          onClick={toggleGrid}
-          className={showGrid ? 'bg-indigo-600 hover:bg-indigo-700' : ''}
+          onClick={() => {
+            toggleGrid();
+            console.log(`Grid toggled: ${!showGrid}`);
+          }}
+          className={`transition-smooth rounded-xl ${
+            showGrid 
+              ? 'btn-brand shadow-lg' 
+              : 'hover:bg-white/50 dark:hover:bg-gray-700/50'
+          }`}
           title="Toggle Grid"
         >
           <Grid3x3 className="w-4 h-4" />
@@ -47,29 +61,43 @@ export const Toolbar: React.FC = () => {
       </div>
 
       <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={undo}
-          disabled={!canUndo}
-          title="Undo (Ctrl+Z)"
-        >
-          <Undo2 className="w-4 h-4" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={redo}
-          disabled={!canRedo}
-          title="Redo (Ctrl+Shift+Z)"
-        >
-          <Redo2 className="w-4 h-4" />
-        </Button>
+        <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 rounded-xl p-1">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              undo();
+              console.log('Undo action performed');
+            }}
+            disabled={!canUndo}
+            className="hover:bg-white/50 dark:hover:bg-gray-700/50 disabled:opacity-30 transition-smooth rounded-lg"
+            title="Undo (Ctrl+Z)"
+          >
+            <Undo2 className="w-4 h-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              redo();
+              console.log('Redo action performed');
+            }}
+            disabled={!canRedo}
+            className="hover:bg-white/50 dark:hover:bg-gray-700/50 disabled:opacity-30 transition-smooth rounded-lg"
+            title="Redo (Ctrl+Shift+Z)"
+          >
+            <Redo2 className="w-4 h-4" />
+          </Button>
+        </div>
+        
         <Button
           variant="default"
           size="sm"
-          onClick={handleExport}
-          className="bg-indigo-600 hover:bg-indigo-700"
+          onClick={() => {
+            handleExport();
+            console.log('Export initiated');
+          }}
+          className="btn-brand shadow-lg hover-lift rounded-xl"
           title="Export"
         >
           <Download className="w-4 h-4 mr-2" />
