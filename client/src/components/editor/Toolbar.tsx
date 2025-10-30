@@ -1,11 +1,11 @@
 import React from 'react';
-import { Monitor, Tablet, Smartphone, Grid3x3, Undo2, Redo2, Download, Sparkles } from 'lucide-react';
+import { Monitor, Tablet, Smartphone, Grid3x3, Undo2, Redo2, Download, Sparkles, Magnet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEditor } from '@/contexts/EditorContext';
 import { DeviceMode } from '@/types/editor';
 
 export const Toolbar: React.FC = () => {
-  const { deviceMode, setDeviceMode, showGrid, toggleGrid, undo, redo, canUndo, canRedo } = useEditor();
+  const { deviceMode, setDeviceMode, showGrid, toggleGrid, snapToGrid, toggleSnapToGrid, undo, redo, canUndo, canRedo } = useEditor();
 
   const deviceModes: { mode: DeviceMode; icon: React.ReactNode; label: string }[] = [
     { mode: 'desktop', icon: <Monitor className="w-4 h-4" />, label: 'Desktop' },
@@ -31,8 +31,8 @@ export const Toolbar: React.FC = () => {
                 console.log(`Device mode changed to: ${mode}`);
               }}
               className={`transition-smooth ${
-                deviceMode === mode 
-                  ? 'btn-brand shadow-lg' 
+                deviceMode === mode
+                  ? 'btn-brand shadow-lg'
                   : 'hover:bg-white/50 dark:hover:bg-gray-700/50'
               }`}
               title={label}
@@ -41,22 +41,39 @@ export const Toolbar: React.FC = () => {
             </Button>
           ))}
         </div>
-        
+
         <Button
           variant={showGrid ? 'default' : 'ghost'}
           size="sm"
           onClick={() => {
             toggleGrid();
-            console.log(`Grid toggled: ${!showGrid}`);
+            console.log(`Grid toggled: ${!showGrid ? 'visible' : 'hidden'}`);
           }}
           className={`transition-smooth rounded-xl ${
-            showGrid 
-              ? 'btn-brand shadow-lg' 
+            showGrid
+              ? 'btn-brand shadow-lg'
               : 'hover:bg-white/50 dark:hover:bg-gray-700/50'
           }`}
           title="Toggle Grid"
         >
           <Grid3x3 className="w-4 h-4" />
+        </Button>
+
+        <Button
+          variant={snapToGrid ? 'default' : 'ghost'}
+          size="sm"
+          onClick={() => {
+            toggleSnapToGrid();
+            console.log(`Snap to grid: ${!snapToGrid ? 'enabled' : 'disabled'}`);
+          }}
+          className={`transition-smooth rounded-xl ${
+            snapToGrid
+              ? 'btn-brand shadow-lg'
+              : 'hover:bg-white/50 dark:hover:bg-gray-700/50'
+          }`}
+          title="Snap to Grid"
+        >
+          <Magnet className="w-4 h-4" />
         </Button>
       </div>
 
@@ -89,7 +106,7 @@ export const Toolbar: React.FC = () => {
             <Redo2 className="w-4 h-4" />
           </Button>
         </div>
-        
+
         <Button
           variant="default"
           size="sm"

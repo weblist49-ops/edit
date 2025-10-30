@@ -19,6 +19,8 @@ interface EditorContextType extends EditorState {
   toggleElementVisibility: (id: string) => void;
   toggleElementLock: (id: string) => void;
   selectMultipleElements: (ids: string[]) => void;
+  snapToGrid: boolean;
+  toggleSnapToGrid: () => void;
 }
 
 const EditorContext = createContext<EditorContextType | undefined>(undefined);
@@ -28,6 +30,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
   const [selectedElementIds, setSelectedElementIds] = useState<string[]>([]);
   const [deviceMode, setDeviceModeState] = useState<DeviceMode>('desktop');
   const [showGrid, setShowGrid] = useState(true);
+  const [snapToGrid, setSnapToGrid] = useState(false);
   const [zoom, setZoomState] = useState(100);
   const [canvasX, setCanvasX] = useState(0);
   const [canvasY, setCanvasY] = useState(0);
@@ -43,26 +46,45 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     setHistoryIndex(prev => prev + 1);
   }, [historyIndex]);
 
+  const snapValue = useCallback((value: number, gridSize: number = 16): number => {
+    if (!snapToGrid) return value;
+    return Math.round(value / gridSize) * gridSize;
+  }, [snapToGrid]);
+
   const addElement = useCallback((element: Omit<CanvasElement, 'id' | 'zIndex'>) => {
-    const newElement: CanvasElement = {
+    const snappedElement = {
       ...element,
+      x: snapValue(element.x),
+      y: snapValue(element.y),
+    };
+    
+    const newElement: CanvasElement = {
+      ...snappedElement,
       id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       zIndex: elements.length + 1,
     };
     const newElements = [...elements, newElement];
     setElements(newElements);
     saveToHistory(newElements);
-    console.log('Element added:', newElement);
-  }, [elements, saveToHistory]);
+    console.log('Element added:', newElement.type, 'at position:', { x: newElement.x, y: newElement.y });
+  }, [elements, saveToHistory, snapValue]);
 
   const updateElement = useCallback((id: string, updates: Partial<CanvasElement>) => {
-    const newElements = elements.map(el => 
-      el.id === id ? { ...el, ...updates } : el
+    const snappedUpdates = { ...updates };
+    if (updates.x !== undefined) {
+      snappedUpdates.x = snapValue(updates.x);
+    }
+    if (updates.y !== undefined) {
+      snappedUpdates.y = snapValue(updates.y);
+    }
+    
+    const newElements = elements.map(el =>
+      el.id === id ? { ...el, ...snappedUpdates } : el
     );
     setElements(newElements);
     saveToHistory(newElements);
-    console.log('Element updated:', id, updates);
-  }, [elements, saveToHistory]);
+    console.log('Element updated:', id, snappedUpdates);
+  }, [elements, saveToHistory, snapValue]);
 
   const deleteElement = useCallback((id: string) => {
     const newElements = elements.filter(el => el.id !== id);
@@ -74,18 +96,18 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const selectElement = useCallback((id: string, multiSelect = false) => {
     if (multiSelect) {
-      setSelectedElementIds(prev => 
+      setSelectedElementIds(prev =>
         prev.includes(id) ? prev.filter(selectedId => selectedId !== id) : [...prev, id]
       );
     } else {
       setSelectedElementIds([id]);
     }
-    console.log('Element selected:', id);
+    console.log('Element selected:', id, multiSelect ? '(multi-select)' : '');
   }, []);
 
   const selectMultipleElements = useCallback((ids: string[]) => {
     setSelectedElementIds(ids);
-    console.log('Multiple elements selected:', ids);
+    console.log('Multiple elements selected:', ids.length, 'elements');
   }, []);
 
   const clearSelection = useCallback(() => {
@@ -95,18 +117,27 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
 
   const setDeviceMode = useCallback((mode: DeviceMode) => {
     setDeviceModeState(mode);
-    console.log('Device mode changed:', mode);
+    console.log('Device mode changed to:', mode);
   }, []);
 
   const toggleGrid = useCallback(() => {
-    setShowGrid(prev => !prev);
-    console.log('Grid toggled');
+    setShowGrid(prev => {
+      console.log('Grid toggled:', !prev ? 'visible' : 'hidden');
+      return !prev;
+    });
+  }, []);
+
+  const toggleSnapToGrid = useCallback(() => {
+    setSnapToGrid(prev => {
+      console.log('Snap to grid toggled:', !prev ? 'enabled' : 'disabled');
+      return !prev;
+    });
   }, []);
 
   const setZoom = useCallback((newZoom: number) => {
     const clampedZoom = Math.max(25, Math.min(400, newZoom));
     setZoomState(clampedZoom);
-    console.log('Zoom changed:', clampedZoom);
+    console.log('Zoom changed to:', clampedZoom + '%');
   }, []);
 
   const setCanvasPosition = useCallback((x: number, y: number) => {
@@ -119,7 +150,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
       setElements(JSON.parse(JSON.stringify(history[newIndex])));
-      console.log('Undo performed');
+      console.log('Undo performed, history index:', newIndex);
     }
   }, [history, historyIndex]);
 
@@ -128,7 +159,7 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
       setElements(JSON.parse(JSON.stringify(history[newIndex])));
-      console.log('Redo performed');
+      console.log('Redo performed, history index:', newIndex);
     }
   }, [history, historyIndex]);
 
@@ -138,34 +169,36 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
       const newElement: CanvasElement = {
         ...element,
         id: `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        x: element.x + 20,
-        y: element.y + 20,
+        x: snapValue(element.x + 20),
+        y: snapValue(element.y + 20),
         zIndex: elements.length + 1,
       };
       const newElements = [...elements, newElement];
       setElements(newElements);
       saveToHistory(newElements);
       setSelectedElementIds([newElement.id]);
-      console.log('Element duplicated:', newElement);
+      console.log('Element duplicated:', element.type, 'new ID:', newElement.id);
     }
-  }, [elements, saveToHistory]);
+  }, [elements, saveToHistory, snapValue]);
 
   const toggleElementVisibility = useCallback((id: string) => {
-    const newElements = elements.map(el => 
+    const newElements = elements.map(el =>
       el.id === id ? { ...el, isVisible: !el.isVisible } : el
     );
     setElements(newElements);
     saveToHistory(newElements);
-    console.log('Element visibility toggled:', id);
+    const element = elements.find(el => el.id === id);
+    console.log('Element visibility toggled:', id, element?.isVisible ? 'hidden' : 'visible');
   }, [elements, saveToHistory]);
 
   const toggleElementLock = useCallback((id: string) => {
-    const newElements = elements.map(el => 
+    const newElements = elements.map(el =>
       el.id === id ? { ...el, isLocked: !el.isLocked } : el
     );
     setElements(newElements);
     saveToHistory(newElements);
-    console.log('Element lock toggled:', id);
+    const element = elements.find(el => el.id === id);
+    console.log('Element lock toggled:', id, element?.isLocked ? 'unlocked' : 'locked');
   }, [elements, saveToHistory]);
 
   const canUndo = historyIndex > 0;
@@ -191,12 +224,28 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         }
       } else if (e.key === 'Escape') {
         clearSelection();
+      } else if (e.key.startsWith('Arrow') && selectedElementIds.length === 1) {
+        e.preventDefault();
+        const element = elements.find(el => el.id === selectedElementIds[0]);
+        if (element && !element.isLocked && element.position === 'absolute') {
+          const step = e.shiftKey ? 10 : 1;
+          let newX = element.x;
+          let newY = element.y;
+          
+          if (e.key === 'ArrowLeft') newX -= step;
+          if (e.key === 'ArrowRight') newX += step;
+          if (e.key === 'ArrowUp') newY -= step;
+          if (e.key === 'ArrowDown') newY += step;
+          
+          updateElement(element.id, { x: newX, y: newY });
+          console.log('Element nudged:', e.key, step + 'px');
+        }
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [undo, redo, duplicateElement, deleteElement, clearSelection, selectedElementIds]);
+  }, [undo, redo, duplicateElement, deleteElement, clearSelection, selectedElementIds, elements, updateElement]);
 
   return (
     <EditorContext.Provider
@@ -227,6 +276,8 @@ export const EditorProvider: React.FC<{ children: React.ReactNode }> = ({ childr
         toggleElementVisibility,
         toggleElementLock,
         selectMultipleElements,
+        snapToGrid,
+        toggleSnapToGrid,
       }}
     >
       {children}
