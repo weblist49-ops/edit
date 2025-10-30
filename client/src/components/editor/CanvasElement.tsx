@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import Draggable from 'react-draggable';
+import Draggable, { DraggableEvent, DraggableData } from 'react-draggable';
 import { Eye, EyeOff, Lock, Unlock, Image as ImageIcon, Video as VideoIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useEditor } from '@/contexts/EditorContext';
@@ -18,7 +18,7 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({ element, isSelecte
 
   if (!element.isVisible) return null;
 
-  const handleDrag = (_e: any, data: { x: number; y: number }) => {
+  const handleDrag = (_e: DraggableEvent, data: DraggableData) => {
     if (!element.isLocked && element.position === 'absolute') {
       updateElement(element.id, { x: data.x, y: data.y });
     }
@@ -70,7 +70,7 @@ export const CanvasElement: React.FC<CanvasElementProps> = ({ element, isSelecte
     borderWidth: element.style?.borderWidth,
     borderColor: element.style?.borderColor,
     borderStyle: element.style?.borderStyle,
-    textAlign: element.style?.textAlign as any,
+    textAlign: element.style?.textAlign as React.CSSProperties['textAlign'],
     display: element.style?.display,
     gridTemplateColumns: element.style?.gridTemplateColumns,
     gap: element.style?.gap,
