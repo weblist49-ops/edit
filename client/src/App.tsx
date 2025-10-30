@@ -5,7 +5,7 @@ import { AuthProvider } from "./contexts/AuthContext"
 import { Login } from "./pages/Login"
 import { Register } from "./pages/Register"
 import { ProtectedRoute } from "./components/ProtectedRoute"
-import { Layout } from "./components/Layout"
+import { Editor } from "./pages/Editor"
 import { BlankPage } from "./pages/BlankPage"
 
 function App() {
@@ -16,7 +16,7 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/" element={<ProtectedRoute> <Layout /> </ProtectedRoute>} />
+          <Route path="/" element={<ProtectedRoute> <Editor /> </ProtectedRoute>} />
           <Route path="*" element={<BlankPage />} />
         </Routes>
       </Router>
